@@ -156,42 +156,44 @@ const Cart = () => {
                 transition={{ delay: 0.3 }}
                 className="bg-white rounded-2xl shadow-lg p-6 sticky top-24"
               >
-                <h2 className="text-xl font-semibold text-gray-800 mb-6">Order Summary</h2>
-                
-                <div className="space-y-3 mb-6">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Subtotal</span>
-                    <span className="font-semibold">₹{totalPrice}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Delivery Fee</span>
-                    <span className="font-semibold">₹{deliveryFee}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Taxes & Fees</span>
-                    <span className="font-semibold">₹{taxes}</span>
-                  </div>
-                  <div className="border-t pt-3">
-                    <div className="flex justify-between text-lg font-bold">
-                      <span>Total</span>
-                      <span className="text-green-600">₹{finalTotal}</span>
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-800 mb-6">Order Summary</h2>
+                  
+                  <div className="space-y-3 mb-6">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Subtotal</span>
+                      <span className="font-semibold">₹{totalPrice}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Delivery Fee</span>
+                      <span className="font-semibold">₹{deliveryFee}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Taxes & Fees</span>
+                      <span className="font-semibold">₹{taxes}</span>
+                    </div>
+                    <div className="border-t pt-3">
+                      <div className="flex justify-between text-lg font-bold">
+                        <span>Total</span>
+                        <span className="text-green-600">₹{finalTotal}</span>
+                      </div>
                     </div>
                   </div>
+
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={handleCheckout}
+                    className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-4 rounded-xl font-semibold text-lg hover:from-orange-600 hover:to-red-600 transition-all flex items-center justify-center gap-2"
+                  >
+                    <CreditCard size={20} />
+                    Proceed to Checkout
+                  </motion.button>
+
+                  <p className="text-xs text-gray-500 text-center mt-3">
+                    Estimated delivery: 30-45 minutes
+                  </p>
                 </div>
-
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={handleCheckout}
-                  className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-4 rounded-xl font-semibold text-lg hover:from-orange-600 hover:to-red-600 transition-all flex items-center justify-center gap-2"
-                >
-                  <CreditCard size={20} />
-                  Proceed to Checkout
-                </motion.button>
-
-                <p className="text-xs text-gray-500 text-center mt-3">
-                  Estimated delivery: 30-45 minutes
-                </p>
               </motion.div>
             </div>
           </div>

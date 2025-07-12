@@ -57,10 +57,17 @@ Before running this project, make sure you have the following installed:
    Create a `.env` file in the root directory and add your configuration:
 
    ```env
-   VITE_AUTH0_DOMAIN=your-auth0-domain
-   VITE_AUTH0_CLIENT_ID=your-auth0-client-id
-   VITE_FIREBASE_CONFIG=your-firebase-config
+   # Supabase Configuration
+   VITE_SUPABASE_URL=your_supabase_project_url_here
+   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key_here
    ```
+
+   **To get your Supabase credentials:**
+   1. Go to [Supabase Dashboard](https://supabase.com/dashboard)
+   2. Select your project (or create a new one)
+   3. Go to Settings → API
+   4. Copy the "Project URL" and "anon public" key
+   5. Replace the values in your `.env` file
 
 4. **Start the development server**
 
