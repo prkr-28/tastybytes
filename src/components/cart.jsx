@@ -177,6 +177,7 @@ const Cart = () => {
                       <span className="text-green-600">₹{finalTotal}</span>
                     </div>
                   </div>
+                </div>
 
                 <motion.button
                   whileHover={{ scale: 1.02 }}
