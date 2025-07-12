@@ -1,104 +1,234 @@
-// import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { useAuth0 } from '@auth0/auth0-react';
+import { motion } from 'framer-motion';
+import { Menu, X, ShoppingCart, User, LogOut, History } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import AuthModal from './auth/AuthModal';
 
 const Header = () => {
-  // const [btn_name, setbtnName] = useState('Login');
-
-  // console.log('header rendered');
-
-  //if there is no dependency array in useState hook then useState is called on every render...
-  //if there is e=an empty array passed then useStete is called on initial render i.e just once..
-  //if( any depdendency is passed in the array then useState is called if the dependency changes)...
-
-  // useEffect(() => {
-  //   console.log('usestate rendered');
-  // });
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authMode, setAuthMode] = useState('signin');
 
   const cartItems = useSelector((store) => store.cart);
-  const { user, loginWithRedirect, isAuthenticated, logout } = useAuth0();
+  const { user, signOut } = useAuth();
+
+  const handleAuthClick = (mode) => {
+    setAuthMode(mode);
+    setIsAuthModalOpen(true);
+    setIsMenuOpen(false);
+  };
+
+  const handleSignOut = () => {
+    signOut();
+    setIsMenuOpen(false);
+  };
 
   return (
-    <div>
-      <div className="flex justify-between items-center bg-white text-[18px] p-2 border-b border-green-600">
-        <div className="logo-container italic mt-2 mb-2 ml-2">
-          <Link to={'/'} className="flex items-center gap-2">
-            <img
-              className="w-16 h-16 object-cover border-4 border-white"
-              src="https://www.svgrepo.com/show/490737/food-dish.svg"
-              alt=""
-            />
-            <span className="flex flex-col text-3xl font-bold text-transparent bg-gradient-to-r from-purple-500 via-pink-500 to-yellow-500 bg-clip-text">
-              TastyBites
-            </span>
-          </Link>
-        </div>
-        <div>
-          <ul>
-            <div className="flex gap-8 p-4 items-center">
-              {isAuthenticated && (
-                <span className="text-[15px] text-gray-400 border-b border-gray-400 not-italic">
-                  {user.name}
-                </span>
+    <>
+      <motion.header
+        initial={{ y: -100 }}
+        animate={{ y: 0 }}
+        className="bg-white shadow-lg sticky top-0 z-40"
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            {/* Logo */}
+            <Link to="/" className="flex items-center gap-3">
+              <motion.img
+                whileHover={{ rotate: 360 }}
+                transition={{ duration: 0.5 }}
+                className="w-10 h-10"
+                src="https://www.svgrepo.com/show/490737/food-dish.svg"
+                alt="TastyBites"
+              />
+              <span className="text-2xl font-bold bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">
+                TastyBites
+              </span>
+            </Link>
+
+            {/* Desktop Navigation */}
+            <nav className="hidden md:flex items-center space-x-8">
+              <Link
+                to="/"
+                className="text-gray-700 hover:text-orange-500 transition-colors font-medium"
+              >
+                Home
+              </Link>
+              <Link
+                to="/about"
+                className="text-gray-700 hover:text-orange-500 transition-colors font-medium"
+              >
+                About
+              </Link>
+              <Link
+                to="/contact"
+                className="text-gray-700 hover:text-orange-500 transition-colors font-medium"
+              >
+                Contact
+              </Link>
+              {user && (
+                <Link
+                  to="/orders"
+                  className="text-gray-700 hover:text-orange-500 transition-colors font-medium flex items-center gap-1"
+                >
+                  <History size={18} />
+                  Orders
+                </Link>
               )}
-              <li>
-                <Link
-                  to="/"
-                  className="hover:border-b-2 transition-all duration-100"
-                >
-                  Home
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/about"
-                  className="hover:border-b-2 transition-all duration-100"
-                >
-                  About us
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/contact"
-                  className="hover:border-b-2 transition-all duration-100"
-                >
-                  Conatct us
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/cart"
-                  className="hover:border-b-2 font-semibold transition-all duration-100"
-                >
-                  Cart
-                  {cartItems.length == 0 ? '' : `(${cartItems.length})`}
-                </Link>
-              </li>
-              {isAuthenticated ? (
-                <button
-                  className="focus:outline-none text-white bg-purple-700 hover:bg-purple-800 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-purple-600 dark:hover:bg-purple-700 dark:focus:ring-purple-900"
-                  onClick={() =>
-                    logout({
-                      logoutParams: { returnTo: window.location.origin },
-                    })
-                  }
-                >
-                  Log Out
-                </button>
+            </nav>
+
+            {/* Right side items */}
+            <div className="flex items-center space-x-4">
+              {/* Cart */}
+              <Link
+                to="/cart"
+                className="relative p-2 text-gray-700 hover:text-orange-500 transition-colors"
+              >
+                <ShoppingCart size={24} />
+                {cartItems.length > 0 && (
+                  <motion.span
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center"
+                  >
+                    {cartItems.length}
+                  </motion.span>
+                )}
+              </Link>
+
+              {/* User Menu */}
+              {user ? (
+                <div className="hidden md:flex items-center space-x-3">
+                  <div className="flex items-center gap-2 px-3 py-1 bg-gray-100 rounded-full">
+                    <User size={18} className="text-gray-600" />
+                    <span className="text-sm font-medium text-gray-700">
+                      {user.user_metadata?.name || user.email}
+                    </span>
+                  </div>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={handleSignOut}
+                    className="flex items-center gap-1 px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  >
+                    <LogOut size={18} />
+                    Sign Out
+                  </motion.button>
+                </div>
               ) : (
-                <button
-                  className="focus:outline-none text-white bg-purple-700 hover:bg-purple-800 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-purple-600 dark:hover:bg-purple-700 dark:focus:ring-purple-900"
-                  onClick={() => loginWithRedirect()}
-                >
-                  Log In
-                </button>
+                <div className="hidden md:flex items-center space-x-2">
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => handleAuthClick('signin')}
+                    className="px-4 py-2 text-gray-700 hover:text-orange-500 transition-colors font-medium"
+                  >
+                    Sign In
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => handleAuthClick('signup')}
+                    className="px-4 py-2 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg font-medium hover:from-orange-600 hover:to-red-600 transition-all"
+                  >
+                    Sign Up
+                  </motion.button>
+                </div>
               )}
+
+              {/* Mobile menu button */}
+              <button
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="md:hidden p-2 text-gray-700 hover:text-orange-500 transition-colors"
+              >
+                {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+              </button>
             </div>
-          </ul>
+          </div>
         </div>
-      </div>
-    </div>
+
+        {/* Mobile Navigation */}
+        <motion.div
+          initial={false}
+          animate={{ height: isMenuOpen ? 'auto' : 0 }}
+          className="md:hidden overflow-hidden bg-white border-t"
+        >
+          <div className="px-4 py-4 space-y-3">
+            <Link
+              to="/"
+              onClick={() => setIsMenuOpen(false)}
+              className="block text-gray-700 hover:text-orange-500 transition-colors font-medium"
+            >
+              Home
+            </Link>
+            <Link
+              to="/about"
+              onClick={() => setIsMenuOpen(false)}
+              className="block text-gray-700 hover:text-orange-500 transition-colors font-medium"
+            >
+              About
+            </Link>
+            <Link
+              to="/contact"
+              onClick={() => setIsMenuOpen(false)}
+              className="block text-gray-700 hover:text-orange-500 transition-colors font-medium"
+            >
+              Contact
+            </Link>
+            {user && (
+              <Link
+                to="/orders"
+                onClick={() => setIsMenuOpen(false)}
+                className="block text-gray-700 hover:text-orange-500 transition-colors font-medium"
+              >
+                Order History
+              </Link>
+            )}
+            
+            {user ? (
+              <div className="pt-3 border-t space-y-3">
+                <div className="flex items-center gap-2">
+                  <User size={18} className="text-gray-600" />
+                  <span className="text-sm font-medium text-gray-700">
+                    {user.user_metadata?.name || user.email}
+                  </span>
+                </div>
+                <button
+                  onClick={handleSignOut}
+                  className="flex items-center gap-2 text-red-600 font-medium"
+                >
+                  <LogOut size={18} />
+                  Sign Out
+                </button>
+              </div>
+            ) : (
+              <div className="pt-3 border-t space-y-3">
+                <button
+                  onClick={() => handleAuthClick('signin')}
+                  className="block w-full text-left text-gray-700 hover:text-orange-500 transition-colors font-medium"
+                >
+                  Sign In
+                </button>
+                <button
+                  onClick={() => handleAuthClick('signup')}
+                  className="block w-full text-left bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-2 rounded-lg font-medium"
+                >
+                  Sign Up
+                </button>
+              </div>
+            )}
+          </div>
+        </motion.div>
+      </motion.header>
+
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        initialMode={authMode}
+      />
+    </>
   );
 };
 

@@ -6,10 +6,9 @@ import { createBrowserRouter, RouterProvider, Outlet } from 'react-router-dom';
 import About from './components/about.jsx';
 import Contact from './components/contact.jsx';
 import Body from './components/body.jsx';
-//import RestroMenu from './components/resmenu.jsx';
 import { lazy, Suspense } from 'react';
 import Cart from './components/cart.jsx';
-import ProtectedRoute from './components/ProtectedRoute.jsx';
+import OrderHistory from './components/orders/OrderHistory.jsx';
 
 const RestroMenu = lazy(() => import('./components/resmenu.jsx'));
 
@@ -32,11 +31,11 @@ const appRouter = createBrowserRouter([
       },
       {
         path: '/cart',
-        element: (
-          <ProtectedRoute>
-            <Cart />
-          </ProtectedRoute>
-        ),
+        element: <Cart />,
+      },
+      {
+        path: '/orders',
+        element: <OrderHistory />,
       },
       {
         path: '/restromenu/:resid',
