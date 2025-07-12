@@ -175,10 +175,8 @@ const Cart = () => {
                     <div className="flex justify-between text-lg font-bold">
                       <span>Total</span>
                       <span className="text-green-600">₹{finalTotal}</span>
-                      </div>
                     </div>
                   </div>
-                </div>
 
                 <motion.button
                   whileHover={{ scale: 1.02 }}
