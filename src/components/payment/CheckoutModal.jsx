@@ -4,13 +4,16 @@ import { X, CreditCard, MapPin, Clock, ShoppingBag } from 'lucide-react'
 import { useSelector, useDispatch } from 'react-redux'
 import { clearCart } from '../../utils/cartSlice'
 import { useAuth } from '../../contexts/AuthContext'
-import { supabase } from '../../lib/supabase'
+import { ordersAPI, paymentsAPI } from '../../lib/api'
 import toast from 'react-hot-toast'
 
 const CheckoutModal = ({ isOpen, onClose }) => {
   const [loading, setLoading] = useState(false)
   const [orderData, setOrderData] = useState({
-    address: '',
+    street: '',
+    city: '',
+    state: '',
+    zipCode: '',
     phone: '',
     paymentMethod: 'card',
     notes: ''
@@ -37,34 +40,50 @@ const CheckoutModal = ({ isOpen, onClose }) => {
   }
 
   const handlePlaceOrder = async () => {
-    if (!orderData.address || !orderData.phone) {
+    if (!orderData.street || !orderData.city || !orderData.state || !orderData.zipCode || !orderData.phone) {
       toast.error('Please fill in all required fields')
       return
     }
 
     setLoading(true)
     try {
-      // Create order in database
-      const { data, error } = await supabase
-        .from('orders')
-        .insert([
-          {
-            user_id: user.id,
-            items: cartItems,
-            total_amount: finalTotal,
-            delivery_address: orderData.address,
-            phone: orderData.phone,
-            payment_method: orderData.paymentMethod,
-            notes: orderData.notes,
-            status: 'pending'
-          }
-        ])
-        .select()
+      // Prepare order items
+      const orderItems = cartItems.map(item => ({
+        itemId: item.card.info.id,
+        name: item.card.info.name,
+        price: (item.card.info.price || item.card.info.defaultPrice) / 100,
+        quantity: item.quantity,
+        imageId: item.card.info.imageId
+      }))
 
-      if (error) throw error
+      // Create order
+      const orderResponse = await ordersAPI.createOrder({
+        items: orderItems,
+        totalAmount: finalTotal,
+        deliveryAddress: {
+          street: orderData.street,
+          city: orderData.city,
+          state: orderData.state,
+          zipCode: orderData.zipCode
+        },
+        phone: orderData.phone,
+        paymentMethod: orderData.paymentMethod,
+        notes: orderData.notes
+      })
 
-      // Simulate payment processing
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      if (orderData.paymentMethod === 'card') {
+        // Create payment intent for card payments
+        const paymentResponse = await paymentsAPI.createPaymentIntent(
+          finalTotal,
+          orderResponse.order._id
+        )
+
+        // In a real app, you would integrate with Stripe Elements here
+        // For demo purposes, we'll simulate successful payment
+        await new Promise(resolve => setTimeout(resolve, 2000))
+        
+        await paymentsAPI.confirmPayment(paymentResponse.paymentIntentId)
+      }
 
       // Clear cart and close modal
       dispatch(clearCart())
@@ -72,7 +91,7 @@ const CheckoutModal = ({ isOpen, onClose }) => {
       toast.success('Order placed successfully! 🎉')
       
     } catch (error) {
-      toast.error('Failed to place order. Please try again.')
+      toast.error(error.message || 'Failed to place order. Please try again.')
       console.error('Order error:', error)
     } finally {
       setLoading(false)
@@ -149,19 +168,66 @@ const CheckoutModal = ({ isOpen, onClose }) => {
                 Delivery Details
               </h3>
               
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Delivery Address *
-                </label>
-                <textarea
-                  name="address"
-                  value={orderData.address}
-                  onChange={handleInputChange}
-                  placeholder="Enter your complete address..."
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
-                  rows="3"
-                  required
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Street Address *
+                  </label>
+                  <input
+                    type="text"
+                    name="street"
+                    value={orderData.street}
+                    onChange={handleInputChange}
+                    placeholder="Enter street address"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    City *
+                  </label>
+                  <input
+                    type="text"
+                    name="city"
+                    value={orderData.city}
+                    onChange={handleInputChange}
+                    placeholder="Enter city"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    State *
+                  </label>
+                  <input
+                    type="text"
+                    name="state"
+                    value={orderData.state}
+                    onChange={handleInputChange}
+                    placeholder="Enter state"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    ZIP Code *
+                  </label>
+                  <input
+                    type="text"
+                    name="zipCode"
+                    value={orderData.zipCode}
+                    onChange={handleInputChange}
+                    placeholder="Enter ZIP code"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
+                    required
+                  />
+                </div>
               </div>
 
               <div>

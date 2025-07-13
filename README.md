@@ -19,15 +19,17 @@ A modern, responsive food delivery application built with React.js that allows u
 
 ## 🚀 Tech Stack
 
-- **Frontend**: React 19.1.0
+- **Frontend**: React 19.1.0 with Vite
 - **Routing**: React Router DOM 7.6.0
 - **State Management**: Redux Toolkit & React Redux
 - **Styling**: Tailwind CSS 4.1.7
-- **Authentication**: Auth0 React
+- **Authentication**: JWT with MongoDB
 - **Icons**: Font Awesome & React Icons
 - **Build Tool**: Vite 6.3.5
-- **Backend Integration**: Firebase
-- **API**: Swiggy API integration
+- **Backend**: Node.js with Express.js
+- **Database**: MongoDB with Mongoose
+- **Payment**: Stripe Integration
+- **API**: Custom REST API + Swiggy API integration
 
 ## 📋 Prerequisites
 
@@ -54,28 +56,50 @@ Before running this project, make sure you have the following installed:
 
 3. **Set up environment variables**
 
-   Create a `.env` file in the root directory and add your configuration:
+   Create a `.env` file in the root directory for frontend:
 
    ```env
-   # Supabase Configuration
-   VITE_SUPABASE_URL=your_supabase_project_url_here
-   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key_here
+   # API Configuration
+   VITE_API_URL=http://localhost:5000/api
    ```
 
-   **To get your Supabase credentials:**
-   1. Go to [Supabase Dashboard](https://supabase.com/dashboard)
-   2. Select your project (or create a new one)
-   3. Go to Settings → API
-   4. Copy the "Project URL" and "anon public" key
-   5. Replace the values in your `.env` file
+   The backend `.env` file is already configured with default values.
 
-4. **Start the development server**
+4. **Install backend dependencies**
 
    ```bash
+   cd server
+   npm install
+   ```
+
+5. **Start MongoDB**
+
+   Make sure MongoDB is running on your system:
+   ```bash
+   # On macOS with Homebrew
+   brew services start mongodb-community
+   
+   # On Ubuntu
+   sudo systemctl start mongod
+   
+   # Or use MongoDB Atlas (cloud)
+   ```
+
+6. **Start the backend server**
+
+   ```bash
+   cd server
    npm run dev
    ```
 
-5. **Open your browser**
+7. **Start the frontend development server**
+
+   ```bash
+   cd .. # Go back to root directory
+   npm run dev
+   ```
+
+8. **Open your browser**
 
    Navigate to `http://localhost:5173` to view the application.
 
@@ -84,6 +108,12 @@ Before running this project, make sure you have the following installed:
 ```
 foodapk/
 ├── public/                 # Static assets
+├── server/                 # Backend API
+│   ├── models/            # MongoDB models
+│   ├── routes/            # API routes
+│   ├── middleware/        # Auth middleware
+│   ├── index.js           # Server entry point
+│   └── package.json       # Backend dependencies
 ├── src/
 │   ├── assets/            # Images and other assets
 │   ├── components/        # React components
@@ -97,12 +127,18 @@ foodapk/
 │   │   ├── resmenu.jsx    # Restaurant menu
 │   │   ├── shimmer.jsx    # Loading skeleton
 │   │   ├── popup.jsx      # Modal component
-│   │   └── ProtectedRoute.jsx # Auth wrapper
+│   │   ├── auth/          # Authentication components
+│   │   ├── payment/       # Payment components
+│   │   └── orders/        # Order components
 │   ├── utils/             # Utility functions and hooks
 │   │   ├── appStore.jsx   # Redux store configuration
 │   │   ├── cartSlice.jsx  # Cart state management
 │   │   ├── useOnlinestatus.jsx # Network status hook
 │   │   └── useRestromenu.jsx   # Restaurant menu hook
+│   ├── lib/               # API and utility libraries
+│   │   └── api.js         # API client
+│   ├── contexts/          # React contexts
+│   │   └── AuthContext.jsx # Authentication context
 │   ├── App.jsx            # Main App component
 │   ├── main.jsx           # Entry point
 │   └── index.css          # Global styles
@@ -116,8 +152,8 @@ foodapk/
 
 ### Header Component
 
-- **Navigation**: Home, About, Contact, Cart links
-- **Authentication**: Login/Logout with Auth0
+- **Navigation**: Home, About, Contact, Cart, Orders links
+- **Authentication**: Login/Logout with JWT
 - **Cart Counter**: Real-time cart item count
 - **User Profile**: Display authenticated user information
 
@@ -131,10 +167,17 @@ foodapk/
 
 ### Cart Component
 
-- **Protected Route**: Requires authentication
+- **Authentication Required**: Login required for checkout
 - **Add/Remove Items**: Full cart management
 - **Persistent State**: Redux-based state management
+- **Checkout Process**: Complete order placement with payment
 
+### Order Management
+
+- **Order History**: View past orders with status tracking
+- **Real-time Updates**: Order status updates
+- **Payment Integration**: Stripe payment processing
+- **Order Cancellation**: Cancel pending orders
 ## 🔧 Available Scripts
 
 ```bash
@@ -143,6 +186,12 @@ npm run dev
 
 # Build for production
 npm run build
+
+# Start backend server
+cd server && npm start
+
+# Start backend in development mode
+cd server && npm run dev
 
 # Preview production build
 npm run preview
@@ -155,10 +204,42 @@ npm run lint
 
 The app integrates with:
 
-- **Swiggy API**: For restaurant data and menus
-- **Auth0**: For user authentication
-- **Firebase**: For backend services
+- **Custom REST API**: Built with Express.js and MongoDB
+- **Swiggy API**: For restaurant data and menus (proxied through Vite)
+- **Stripe API**: For payment processing
+- **JWT Authentication**: Secure user authentication
 
+## 🗄️ Database Schema
+
+### Users Collection
+- User profile information
+- Authentication credentials
+- Delivery addresses
+
+### Orders Collection
+- Order details and items
+- Delivery information
+- Payment and order status
+- Timestamps and tracking
+
+## 🔐 API Endpoints
+
+### Authentication
+- `POST /api/auth/register` - User registration
+- `POST /api/auth/login` - User login
+- `GET /api/auth/me` - Get current user
+- `PUT /api/auth/profile` - Update user profile
+
+### Orders
+- `POST /api/orders` - Create new order
+- `GET /api/orders` - Get user orders
+- `GET /api/orders/:id` - Get specific order
+- `PATCH /api/orders/:id/cancel` - Cancel order
+
+### Payments
+- `POST /api/payments/create-intent` - Create payment intent
+- `POST /api/payments/confirm` - Confirm payment
+- `POST /api/payments/webhook` - Stripe webhook
 ## 📱 Responsive Design
 
 The application is fully responsive and works seamlessly across:
@@ -170,20 +251,27 @@ The application is fully responsive and works seamlessly across:
 
 ## 🔐 Authentication Flow
 
-1. User clicks login button
-2. Redirected to Auth0 login page
-3. After successful authentication, user is redirected back
-4. Access to protected routes (Cart) is granted
-5. User information is displayed in header
+1. User registers/logs in with email and password
+2. Server validates credentials and returns JWT token
+3. Token is stored in localStorage
+4. Token is sent with API requests for authentication
+5. Protected routes and features require valid token
 
 ## 🛍️ Cart Functionality
 
 - Add items from restaurant menus
 - View cart items with quantity and pricing
 - Remove items from cart
-- Protected access (requires login)
+- Checkout process (requires login)
 - Persistent state using Redux
+- Complete order placement with payment
 
+## 💳 Payment Processing
+
+- **Stripe Integration**: Secure payment processing
+- **Multiple Payment Methods**: Card payments and Cash on Delivery
+- **Payment Confirmation**: Real-time payment status updates
+- **Order Tracking**: Complete order lifecycle management
 ## 🎨 UI/UX Features
 
 - **Modern Design**: Clean, intuitive interface
@@ -199,7 +287,32 @@ The application is fully responsive and works seamlessly across:
 - **Shimmer UI**: Better loading experience
 - **Memoization**: Optimized re-renders
 - **Image Optimization**: Efficient asset loading
+- **API Caching**: Efficient data fetching
+- **Database Indexing**: Optimized queries
 
+## 🔧 Development Setup
+
+### Frontend Development
+```bash
+npm run dev
+```
+
+### Backend Development
+```bash
+cd server
+npm run dev
+```
+
+### Database Setup
+1. Install MongoDB locally or use MongoDB Atlas
+2. Update `MONGODB_URI` in server/.env
+3. The application will create collections automatically
+
+### Payment Setup
+1. Create a Stripe account
+2. Get your API keys from Stripe Dashboard
+3. Update `STRIPE_SECRET_KEY` in server/.env
+4. Configure webhook endpoints for production
 ## 🤝 Contributing
 
 1. Fork the repository
@@ -212,19 +325,21 @@ The application is fully responsive and works seamlessly across:
 
 **Priyanshu Kumar**
 
-- GitHub: [@yourusername](https://github.com/prkr-28)
+- GitHub: [@prkr-28](https://github.com/prkr-28)
 - LinkedIn: [Your LinkedIn](https://linkedin.com/in/prkr28)
 
 ## 🙏 Acknowledgments
 
-- [Swiggy](https://swiggy.com) for the restaurant API
-- [Auth0](https://auth0.com) for authentication services
+- [Swiggy](https://swiggy.com) for the restaurant data API
+- [Stripe](https://stripe.com) for payment processing
+- [MongoDB](https://mongodb.com) for the database
 - [Tailwind CSS](https://tailwindcss.com) for the beautiful styling
 - [React](https://reactjs.org) community for the amazing ecosystem
+- [Express.js](https://expressjs.com) for the backend framework
 
 ## 📧 Support
 
-If you have any questions or need help, please open an issue or contact me at your.priyanshu402muz@gmail.com
+If you have any questions or need help, please open an issue or contact me at priyanshu402muz@gmail.com
 
 ---
 

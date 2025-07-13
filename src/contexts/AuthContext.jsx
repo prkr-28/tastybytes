@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react'
-import { supabase } from '../lib/supabase'
+import { authAPI, setAuthToken, removeAuthToken } from '../lib/api'
 import toast from 'react-hot-toast'
 
 const AuthContext = createContext({})
@@ -17,67 +17,57 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
+    // Check if user is logged in on app start
+    const token = localStorage.getItem('authToken')
+    if (token) {
+      getCurrentUser()
+    } else {
       setLoading(false)
-    })
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setUser(session?.user ?? null)
-        setLoading(false)
-        
-        if (event === 'SIGNED_IN') {
-          toast.success('Welcome back!')
-        } else if (event === 'SIGNED_OUT') {
-          toast.success('Signed out successfully')
-        }
-      }
-    )
-
-    return () => subscription.unsubscribe()
+    }
   }, [])
 
-  const signUp = async (email, password, userData) => {
+  const getCurrentUser = async () => {
+    try {
+      const response = await authAPI.getCurrentUser()
+      setUser(response.user)
+    } catch (error) {
+      console.error('Get current user error:', error)
+      removeAuthToken()
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const signUp = async (userData) => {
     try {
       setLoading(true)
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: userData
-        }
-      })
+      const response = await authAPI.register(userData)
       
-      if (error) throw error
+      setAuthToken(response.token)
+      setUser(response.user)
+      toast.success('Account created successfully!')
       
-      if (data.user && !data.user.email_confirmed_at) {
-        toast.success('Check your email for verification link!')
-      }
-      
-      return { data, error: null }
+      return { data: response, error: null }
     } catch (error) {
-      toast.error(error.message)
+      toast.error(error.message || 'Registration failed')
       return { data: null, error }
     } finally {
       setLoading(false)
     }
   }
 
-  const signIn = async (email, password) => {
+  const signIn = async (credentials) => {
     try {
       setLoading(true)
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      })
+      const response = await authAPI.login(credentials)
       
-      if (error) throw error
-      return { data, error: null }
+      setAuthToken(response.token)
+      setUser(response.user)
+      toast.success('Welcome back!')
+      
+      return { data: response, error: null }
     } catch (error) {
-      toast.error(error.message)
+      toast.error(error.message || 'Login failed')
       return { data: null, error }
     } finally {
       setLoading(false)
@@ -87,12 +77,25 @@ export const AuthProvider = ({ children }) => {
   const signOut = async () => {
     try {
       setLoading(true)
-      const { error } = await supabase.auth.signOut()
-      if (error) throw error
+      removeAuthToken()
+      setUser(null)
+      toast.success('Signed out successfully')
     } catch (error) {
-      toast.error(error.message)
+      toast.error('Sign out failed')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const updateProfile = async (userData) => {
+    try {
+      const response = await authAPI.updateProfile(userData)
+      setUser(response.user)
+      toast.success('Profile updated successfully!')
+      return { data: response, error: null }
+    } catch (error) {
+      toast.error(error.message || 'Profile update failed')
+      return { data: null, error }
     }
   }
 
@@ -101,7 +104,9 @@ export const AuthProvider = ({ children }) => {
     loading,
     signUp,
     signIn,
-    signOut
+    signOut,
+    updateProfile,
+    getCurrentUser
   }
 
   return (
